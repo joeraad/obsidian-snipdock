@@ -1,0 +1,86 @@
+name: Bug report
+description: Something in SnipDock is broken or behaves unexpectedly.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please fill in as much as you can. Reports with clear repro steps get fixed first.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences describing the bug.
+      placeholder: The status-bar menu opens off-screen when the window is small.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps that reliably trigger the bug.
+      placeholder: |
+        1. Resize the Obsidian window to ~600px tall.
+        2. Click the SnipDock icon in the status bar.
+        3. Observe the menu opening above the visible viewport.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      placeholder: The menu should fit inside the visible window.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      placeholder: Top half of the menu is clipped above the window.
+    validations:
+      required: true
+
+  - type: input
+    id: obsidian-version
+    attributes:
+      label: Obsidian version
+      description: Settings → About → Current version.
+      placeholder: 1.5.11
+    validations:
+      required: true
+
+  - type: input
+    id: snipdock-version
+    attributes:
+      label: SnipDock version
+      description: Settings → Community plugins → SnipDock.
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or screen recording
+      description: Drag and drop images or video here. Optional but very helpful for UI bugs.
+
+  - type: textarea
+    id: other-plugins
+    attributes:
+      label: Other plugins or themes that might be involved
+      description: Have you tested with all other plugins disabled? Any CSS snippets that touch the status bar or menus?

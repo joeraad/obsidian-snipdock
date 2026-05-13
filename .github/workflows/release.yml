@@ -1,0 +1,32 @@
+name: Release
+
+# Fires when you click "Publish release" in the GitHub UI.
+# Build the plugin and attach main.js, manifest.json, and styles.css
+# to that release, which is what Obsidian fetches when users install.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Attach build artefacts to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            main.js manifest.json styles.css --clobber

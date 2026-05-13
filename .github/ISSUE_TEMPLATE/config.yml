@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/joeraad/obsidian-snipdock/discussions
+    about: For usage questions and open-ended ideas, please use Discussions.

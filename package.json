@@ -1,0 +1,27 @@
+{
+	"name": "snipdock",
+	"version": "0.1.0",
+	"description": "Toggle, create, rename and reload CSS snippets from a status-bar menu.",
+	"main": "main.js",
+	"type": "module",
+	"scripts": {
+		"dev": "node esbuild.config.mjs",
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"version": "node version-bump.mjs && git add manifest.json versions.json"
+	},
+	"keywords": [
+		"obsidian",
+		"obsidian-plugin",
+		"css",
+		"snippets",
+		"theme"
+	],
+	"license": "MIT",
+	"devDependencies": {
+		"@types/node": "^16.18.0",
+		"esbuild": "0.25.5",
+		"obsidian": "latest",
+		"tslib": "2.4.0",
+		"typescript": "^5.8.3"
+	}
+}
