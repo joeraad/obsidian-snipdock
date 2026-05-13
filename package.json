@@ -1,6 +1,6 @@
 {
 	"name": "snipdock",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Toggle, create, rename and reload CSS snippets from a status-bar menu.",
 	"main": "main.js",
 	"type": "module",
