@@ -1,0 +1,8 @@
+# Every pull request requests review from the listed owner(s).
+# Combined with branch protection's "Require review from Code Owners",
+# this means outside contributions can't merge without maintainer approval.
+#
+# Syntax docs:
+# https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
+
+* @joeraad
