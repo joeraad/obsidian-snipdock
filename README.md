@@ -68,13 +68,13 @@ One row per `.css` file in your snippets folder.
 
 ## Install
 
-SnipDock is pending review for the Obsidian community plugin store.
+In Obsidian: **Settings → Community plugins → Browse**, search for "SnipDock", click **Install**, then **Enable**.
 
 ### Manual install
 
-1. Grab `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/joeraad/SnipDock/releases).
+1. Grab `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/joeraad/obsidian-snipdock/releases).
 2. Put them in `<your-vault>/.obsidian/plugins/snipdock/`.
-3. In Obsidian: `Settings → Community plugins`, reload, enable SnipDock.
+3. In Obsidian: **Settings → Community plugins**, reload, enable SnipDock.
 
 ---
 
