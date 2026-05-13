@@ -1,7 +1,7 @@
 {
 	"id": "snipdock",
 	"name": "SnipDock",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"minAppVersion": "1.4.0",
 	"description": "Toggle, create, rename and reload CSS snippets from a status-bar menu.",
 	"author": "Joe Raad",
