@@ -1,14 +1,16 @@
 name: Release
 
 # Fires when you click "Publish release" in the GitHub UI.
-# Build the plugin and attach main.js, manifest.json, and styles.css
-# to that release, which is what Obsidian fetches when users install.
+# Build the plugin, sign artifact attestations, and attach
+# main.js, manifest.json, and styles.css to the release.
 on:
   release:
     types: [published]
 
 permissions:
   contents: write
+  id-token: write       # needed for sigstore OIDC token (attestations)
+  attestations: write   # needed to upload the attestation bundle
 
 jobs:
   build:
@@ -23,6 +25,14 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+
+      - name: Generate artifact attestations
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Attach build artefacts to release
         env:
