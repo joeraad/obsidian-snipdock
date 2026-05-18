@@ -74,6 +74,48 @@
 	height: 1em;
 }
 
+/* search row sits above master, pinned out of the scroll area */
+.menu.snipdock-menu .snipdock-row-search {
+	padding-top: 4px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	margin-bottom: var(--size-2-2, 4px);
+}
+
+.menu.snipdock-menu .snipdock-row-search .menu-item-title {
+	display: none;
+}
+
+.snipdock-search-input {
+	width: 100%;
+	padding: 5px 10px;
+	border-radius: var(--radius-s, 4px);
+	color: var(--text-normal);
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	font-size: var(--font-ui-small, 0.85em);
+}
+
+.menu.snipdock-menu .snipdock-hidden {
+	display: none;
+}
+
+/* multi-column layout: rows dealt round-robin into flex columns */
+.menu.snipdock-menu .snipdock-columns {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 8px;
+	width: 100%;
+}
+
+.menu.snipdock-menu .snipdock-column {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 0;
+	min-width: 0;
+}
+
 /* snippet rows: toggle | title | rename | open */
 .snipdock-row-snippet {
 	flex-wrap: nowrap;

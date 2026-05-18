@@ -22,7 +22,7 @@ export default class SnipDockPlugin extends Plugin {
 			id: "open-snippet-menu",
 			name: "Open snippet menu",
 			icon: "snipdock-dock",
-			callback: () => openSnippetMenu(this),
+			callback: () => openSnippetMenu(this, this.statusBarEl),
 		});
 
 		this.addCommand({
@@ -59,7 +59,7 @@ export default class SnipDockPlugin extends Plugin {
 		el.addClass("mod-clickable");
 		setIcon(el, "snipdock-dock");
 		setTooltip(el, "Open SnipDock menu", { placement: "top" });
-		this.registerDomEvent(el, "click", () => openSnippetMenu(this));
+		this.registerDomEvent(el, "click", () => openSnippetMenu(this, el));
 		this.statusBarEl = el;
 	}
 

@@ -17,17 +17,31 @@ interface MenuState {
 	masterTitleEl: HTMLElement | null;
 	masterToggle: ToggleComponent | null;
 	snippetToggles: Map<string, ToggleComponent>;
+	snippetRows: Map<string, HTMLElement>;
+	searchInputEl: HTMLInputElement | null;
 	isSyncing: boolean;
 }
 
-export function openSnippetMenu(plugin: SnipDockPlugin): void {
+export function openSnippetMenu(
+	plugin: SnipDockPlugin,
+	anchorEl?: HTMLElement | null
+): void {
 	const doc = plugin.app.workspace.containerEl.doc;
 	if (doc.querySelector(`.menu.${MENU_CLASS}`)) return;
 
 	const menu = new Menu() as MenuWithDom;
 	menu.dom.addClass(MENU_CLASS);
+
+	const win = plugin.app.workspace.containerEl.win;
+	const { multiColumn, columnCount, menuWidth } = plugin.settings;
+	const COLUMN_GAP = 8;
+	const rawWidth = multiColumn
+		? columnCount * menuWidth + (columnCount - 1) * COLUMN_GAP
+		: menuWidth;
+	// Never let the menu exceed the viewport, however many wide columns are set.
+	const menuWidthPx = Math.min(rawWidth, win.innerWidth - 24);
 	menu.dom.setCssProps({
-		"--snipdock-menu-width": `${plugin.settings.menuWidth}px`,
+		"--snipdock-menu-width": `${menuWidthPx}px`,
 		"--snipdock-menu-max-height": `${plugin.settings.menuMaxHeightVh}vh`,
 	});
 
@@ -38,36 +52,127 @@ export function openSnippetMenu(plugin: SnipDockPlugin): void {
 		masterTitleEl: null,
 		masterToggle: null,
 		snippetToggles: new Map(),
+		snippetRows: new Map(),
+		searchInputEl: null,
 		isSyncing: false,
 	};
 
+	if (plugin.settings.enableSearch) {
+		addSearchRow(menu, state);
+		menu.addSeparator();
+	}
 	addMasterRow(menu, state);
 	menu.addSeparator();
 	addSnippetRows(menu, state);
 	menu.addSeparator();
 	addActionRow(menu, plugin);
 
-	const win = plugin.app.workspace.containerEl.win;
-	menu.showAtPosition({ x: win.innerWidth - 15, y: win.innerHeight - 37 });
-	pinHeaderAndFooter(menu);
+	const anchored = plugin.settings.anchorToStatusBar && anchorEl;
+	if (anchored) {
+		const rect = anchorEl!.getBoundingClientRect();
+		menu.showAtPosition({ x: rect.left, y: rect.top });
+	} else {
+		menu.showAtPosition({ x: win.innerWidth - 15, y: win.innerHeight - 37 });
+	}
+	pinHeaderAndFooter(menu, state);
+	if (plugin.settings.multiColumn) applyMultiColumnLayout(menu, state);
+	// Obsidian fixes `top` at open time, so a shrinking list would lift the
+	// menu away from the status bar. Re-anchor by the bottom edge so it always
+	// grows/shrinks upward from just above the bar.
+	const bottomOffset = anchored
+		? win.innerHeight - anchorEl!.getBoundingClientRect().top
+		: 37;
+	menu.dom.style.top = "";
+	menu.dom.style.bottom = `${bottomOffset}px`;
+	// Keep the (possibly very wide) menu fully on screen horizontally.
+	const menuRect = menu.dom.getBoundingClientRect();
+	let left = menuRect.left;
+	if (left + menuRect.width > win.innerWidth - 8) {
+		left = win.innerWidth - menuRect.width - 8;
+	}
+	if (left < 8) left = 8;
+	menu.dom.style.left = `${left}px`;
+	state.searchInputEl?.focus();
 }
 
 /* Move the master row above `.menu-scroll` and the action row below it, so they
    stay pinned while the middle list scrolls. `.menu` is already a flex column,
    so this just makes them flex siblings of the scroll container. */
-function pinHeaderAndFooter(menu: MenuWithDom): void {
+function pinHeaderAndFooter(menu: MenuWithDom, state: MenuState): void {
 	const dom = menu.dom;
 	const scrollEl = menu.scrollEl;
+	const search = dom.querySelector<HTMLElement>(".snipdock-row-search");
 	const master = dom.querySelector<HTMLElement>(".snipdock-row-master");
 	const action = dom.querySelector<HTMLElement>(".snipdock-row-action");
 	if (master) dom.insertBefore(master, scrollEl);
+	if (search) dom.insertBefore(search, master ?? scrollEl);
 	if (action) dom.insertBefore(action, scrollEl.nextSibling);
-	// The separators that bracketed master/action are now stranded at the
-	// scroll edges, drop them.
-	const firstChild = scrollEl.firstElementChild;
-	if (firstChild?.hasClass("menu-separator")) firstChild.remove();
-	const lastChild = scrollEl.lastElementChild;
-	if (lastChild?.hasClass("menu-separator")) lastChild.remove();
+	// Separators only existed to bracket the pinned rows; once those are moved
+	// out they're just stray lines (and there can be several stacked at the
+	// scroll edges). Drop them all — CSS borders divide the sections instead.
+	for (const sep of Array.from(dom.querySelectorAll(".menu-separator"))) {
+		sep.remove();
+	}
+	void state;
+}
+
+function addSearchRow(menu: Menu, state: MenuState): void {
+	menu.addItem((item) => {
+		item.setTitle("");
+		const row = (item as unknown as { dom: HTMLElement }).dom;
+		row.addClass("snipdock-row-search");
+		disableRowScrollIntoView(row);
+
+		const input = row.createEl("input", {
+			type: "text",
+			cls: "snipdock-search-input",
+			attr: { placeholder: "Search snippets…" },
+		});
+		state.searchInputEl = input;
+
+		input.addEventListener("input", () => filterSnippets(state, input.value));
+		// Keep menu keyboard nav and item-selection from hijacking the field.
+		input.addEventListener("keydown", (evt) => evt.stopPropagation());
+		row.addEventListener(
+			"click",
+			(evt) => {
+				evt.preventDefault();
+				evt.stopPropagation();
+				input.focus();
+			},
+			true
+		);
+	});
+}
+
+function filterSnippets(state: MenuState, query: string): void {
+	const q = query.trim().toLowerCase();
+	for (const [name, row] of state.snippetRows) {
+		const match = q === "" || name.toLowerCase().includes(q);
+		row.toggleClass("snipdock-hidden", !match);
+	}
+}
+
+/* Restructure the scrolled snippet rows into evenly-distributed columns.
+   Rows are dealt round-robin (row i -> column i % columnCount) so each column
+   holds an interleaved slice rather than a contiguous block. */
+function applyMultiColumnLayout(menu: MenuWithDom, state: MenuState): void {
+	const scrollEl = menu.scrollEl;
+	const rows = Array.from(
+		scrollEl.querySelectorAll<HTMLElement>(".snipdock-row-snippet")
+	);
+	if (rows.length === 0) return;
+
+	const count = Math.max(2, state.plugin.settings.columnCount);
+	const container = scrollEl.createDiv({ cls: "snipdock-columns" });
+	const columns: HTMLElement[] = [];
+	for (let i = 0; i < count; i++) {
+		columns.push(container.createDiv({ cls: "snipdock-column" }));
+	}
+	rows.forEach((row, i) => {
+		const col = columns[i % count];
+		if (col) col.appendChild(row);
+	});
 }
 
 /* Obsidian's Menu attaches a `mousemove` handler to `.menu-scroll` that drives
@@ -230,6 +335,7 @@ function addSnippetRows(menu: Menu, state: MenuState): void {
 			const row = (item as unknown as { dom: HTMLElement }).dom;
 			row.addClass("snipdock-row-snippet");
 			disableRowScrollIntoView(row);
+			state.snippetRows.set(snippet, row);
 
 			const toggle = new ToggleComponent(row);
 			toggle
