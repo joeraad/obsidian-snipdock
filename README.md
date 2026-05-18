@@ -14,6 +14,34 @@ A rewrite of the unmaintained [MySnippets](https://github.com/chetachiezikeuzor/
 
 ---
 
+## What's new in v1.1.0
+
+### Anchor to status bar icon
+
+New setting to open the menu directly above the SnipDock status-bar icon instead of in the corner of the window. The menu stays pinned just above the bar and grows/shrinks upward as the list changes.
+
+_Suggested by [@Frumkin13](https://github.com/Frumkin13) in [Issue #4](https://github.com/joeraad/obsidian-snipdock/issues/4)._
+
+![Anchor to status bar](assets/feature-anchor.png)
+
+### Snippet search
+
+Filter the snippet list as you type. New setting adds a search box to the top of the menu that filters the snippet list as you type.
+
+_Suggested by [@ksdavidc](https://github.com/ksdavidc) in [Issue #2](https://github.com/joeraad/obsidian-snipdock/issues/2)._
+
+![Snippet search](assets/feature-search.png)
+
+### Multi-column layout
+
+New setting lays snippets out across multiple columns instead of a single list. Configure the number of columns (2–6); snippets are distributed evenly across them. When enabled, the "Menu width" setting becomes "Column width". The menu is automatically kept within the screen bounds at any column count.
+
+_Suggested by [@Bin-T](https://github.com/Bin-T) in [Issue #1](https://github.com/joeraad/obsidian-snipdock/issues/1)._
+
+![Multi-column layout](assets/feature-columns.png)
+
+---
+
 ## Usage
 
 Click the dock icon in the status bar (bottom-right) to open the menu.
@@ -47,10 +75,10 @@ One row per `.css` file in your snippets folder.
 
 ## Commands
 
-| Command | |
-| --- | --- |
-| `Open snippet menu` | Same as clicking the status-bar icon |
-| `Create CSS snippet` | Opens the new-snippet modal |
+| Command                         |                                                        |
+| ------------------------------- | ------------------------------------------------------ |
+| `Open snippet menu`             | Same as clicking the status-bar icon                   |
+| `Create CSS snippet`            | Opens the new-snippet modal                            |
 | `Toggle all snippets on or off` | Master switch. Bind a hotkey for fast theme isolation. |
 
 ---
@@ -60,6 +88,9 @@ One row per `.css` file in your snippets folder.
 ![Settings tab](assets/settings.png)
 
 - Menu width (px) and max height (% of window).
+- Anchor to status bar icon: open the menu directly above the icon instead of the window corner.
+- Search bar: filter the snippet list as you type.
+- Multi-column layout: spread snippets across 2–6 columns; "Menu width" becomes "Column width" when on.
 - Open after creating: open the new file in your editor immediately.
 - Enable on creation: turn new snippets on right away.
 - Snippet template: starter CSS for new snippets.
@@ -97,11 +128,11 @@ Issues and pull requests are welcome on the [SnipDock repository](https://github
 - **Bug reports**: include steps to reproduce, your Obsidian version, your OS, and a screenshot or screen recording if the bug is visual.
 - **Feature ideas**: open an issue describing the use case before sinking time into a PR. Keeps scope creep in check and avoids work going in the wrong direction.
 - **Pull requests**
-	1. Fork the repo and create a feature branch off `main`.
-	2. Run `npm install` then `npm run dev` while you work.
-	3. Keep changes focused, one PR per concern. Match the existing TypeScript style (tabs, double quotes, no `any` casts unless unavoidable).
-	4. Run `npm run build` before pushing. It type-checks first and will fail loudly on errors.
-	5. Describe what the PR changes and why in the body. Screenshots help for any UI tweak.
+    1.  Fork the repo and create a feature branch off `main`.
+    2.  Run `npm install` then `npm run dev` while you work.
+    3.  Keep changes focused, one PR per concern. Match the existing TypeScript style (tabs, double quotes, no `any` casts unless unavoidable).
+    4.  Run `npm run build` before pushing. It type-checks first and will fail loudly on errors.
+    5.  Describe what the PR changes and why in the body. Screenshots help for any UI tweak.
 
 This plugin has a narrow scope (status-bar snippet management). Suggestions that expand into broader theme or CSS tooling are likely to be declined, but a good issue conversation is the best way to find out.
 
