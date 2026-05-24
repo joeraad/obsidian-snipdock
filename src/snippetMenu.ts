@@ -160,8 +160,11 @@ function filterSnippets(state: MenuState, query: string): void {
 }
 
 /* Restructure the scrolled snippet rows into evenly-distributed columns.
-   Rows are dealt round-robin (row i -> column i % columnCount) so each column
-   holds an interleaved slice rather than a contiguous block. */
+   Two modes:
+   - row-first (default): row i -> column (i % columnCount). Snippets read
+     left-to-right, columns hold interleaved slices.
+   - column-first: row i -> column floor(i / perColumn). Each column is a
+     contiguous top-to-bottom slice (Issue #7). */
 function applyMultiColumnLayout(menu: MenuWithDom, state: MenuState): void {
 	const scrollEl = menu.scrollEl;
 	const rows = Array.from(
@@ -170,13 +173,17 @@ function applyMultiColumnLayout(menu: MenuWithDom, state: MenuState): void {
 	if (rows.length === 0) return;
 
 	const count = Math.max(2, state.plugin.settings.columnCount);
+	const columnFirst = state.plugin.settings.columnFirstSort;
+	const perColumn = Math.ceil(rows.length / count);
 	const container = scrollEl.createDiv({ cls: "snipdock-columns" });
 	const columns: HTMLElement[] = [];
 	for (let i = 0; i < count; i++) {
 		columns.push(container.createDiv({ cls: "snipdock-column" }));
 	}
 	rows.forEach((row, i) => {
-		const col = columns[i % count];
+		const col = columnFirst
+			? columns[Math.floor(i / perColumn)]
+			: columns[i % count];
 		if (col) col.appendChild(row);
 	});
 }

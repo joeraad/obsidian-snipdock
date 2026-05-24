@@ -9,6 +9,7 @@ export interface SnipDockSettings {
 	enableSearch: boolean;
 	multiColumn: boolean;
 	columnCount: number;
+	columnFirstSort: boolean;
 }
 
 export const MENU_WIDTH_MIN = 220;
@@ -29,4 +30,5 @@ export const DEFAULT_SETTINGS: SnipDockSettings = {
 	enableSearch: false,
 	multiColumn: false,
 	columnCount: 2,
+	columnFirstSort: false,
 };

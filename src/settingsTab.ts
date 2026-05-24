@@ -145,6 +145,20 @@ export class SnipDockSettingTab extends PluginSettingTab {
 							this.display();
 						})
 				);
+
+			new Setting(containerEl)
+				.setName("Column-first sorting")
+				.setDesc(
+					"Fill each column top-to-bottom before moving to the next, instead of dealing snippets row-by-row across columns."
+				)
+				.addToggle((toggle) =>
+					toggle
+						.setValue(this.plugin.settings.columnFirstSort)
+						.onChange((value) => {
+							this.plugin.settings.columnFirstSort = value;
+							void this.plugin.saveSettings();
+						})
+				);
 		}
 
 		new Setting(containerEl).setName("New snippets").setHeading();
