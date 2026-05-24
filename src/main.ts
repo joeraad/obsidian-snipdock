@@ -53,6 +53,13 @@ export default class SnipDockPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	/* Flush Obsidian's `enabledCssSnippets` write to disk now. `setCssEnabledStatus`
+	   debounces `saveConfig` by 1s with no quit-time flush, so ⌘Q on macOS loses
+	   the toggle if the user closes within that window (issue #10). */
+	flushCustomCssConfig(): void {
+		void this.app.vault.saveConfig?.();
+	}
+
 	private mountStatusBar(): void {
 		const el = this.addStatusBarItem();
 		el.addClass("snipdock-status-button");
@@ -86,6 +93,7 @@ export default class SnipDockPlugin extends Plugin {
 				}
 			}
 		}
+		this.flushCustomCssConfig();
 		void this.saveSettings();
 	}
 }
