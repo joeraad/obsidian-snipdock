@@ -36,7 +36,9 @@ _Suggested by [@ksdavidc](https://github.com/ksdavidc) in [Issue #2](https://git
 
 New setting lays snippets out across multiple columns instead of a single list. Configure the number of columns (2–6); snippets are distributed evenly across them. When enabled, the "Menu width" setting becomes "Column width". The menu is automatically kept within the screen bounds at any column count.
 
-_Suggested by [@Bin-T](https://github.com/Bin-T) in [Issue #1](https://github.com/joeraad/obsidian-snipdock/issues/1)._
+Optionally enable **Column-first sorting** to fill each column top-to-bottom before moving to the next, instead of dealing snippets row-by-row across columns.
+
+_Suggested by [@Bin-T](https://github.com/Bin-T) in [Issue #1](https://github.com/joeraad/obsidian-snipdock/issues/1) and [Issue #7](https://github.com/joeraad/obsidian-snipdock/issues/7)._
 
 ![Multi-column layout](assets/feature-columns.png)
 
@@ -90,7 +92,7 @@ One row per `.css` file in your snippets folder.
 - Menu width (px) and max height (% of window).
 - Anchor to status bar icon: open the menu directly above the icon instead of the window corner.
 - Search bar: filter the snippet list as you type.
-- Multi-column layout: spread snippets across 2–6 columns; "Menu width" becomes "Column width" when on.
+- Multi-column layout: spread snippets across 2–6 columns; "Menu width" becomes "Column width" when on. Toggle "Column-first sorting" to fill columns top-to-bottom instead of row-by-row.
 - Open after creating: open the new file in your editor immediately.
 - Enable on creation: turn new snippets on right away.
 - Snippet template: starter CSS for new snippets.
