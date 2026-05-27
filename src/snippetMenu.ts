@@ -14,6 +14,7 @@ const MENU_CLASS = "snipdock-menu";
 
 interface MenuState {
 	plugin: SnipDockPlugin;
+	masterRowEl: HTMLElement | null;
 	masterTitleEl: HTMLElement | null;
 	masterToggle: ToggleComponent | null;
 	snippetToggles: Map<string, ToggleComponent>;
@@ -30,6 +31,10 @@ export function openSnippetMenu(
 	if (doc.querySelector(`.menu.${MENU_CLASS}`)) return;
 
 	const menu = new Menu() as MenuWithDom;
+	// macOS defaults `Menu.useNativeMenu` to true, which routes through Electron's
+	// native menu and strips every ButtonComponent/ToggleComponent we attach —
+	// leaving an empty popover. Force the DOM path so our custom rows render.
+	menu.setUseNativeMenu(false);
 	menu.dom.addClass(MENU_CLASS);
 
 	const win = plugin.app.workspace.containerEl.win;
@@ -49,6 +54,7 @@ export function openSnippetMenu(
 
 	const state: MenuState = {
 		plugin,
+		masterRowEl: null,
 		masterTitleEl: null,
 		masterToggle: null,
 		snippetToggles: new Map(),
@@ -154,8 +160,11 @@ function filterSnippets(state: MenuState, query: string): void {
 }
 
 /* Restructure the scrolled snippet rows into evenly-distributed columns.
-   Rows are dealt round-robin (row i -> column i % columnCount) so each column
-   holds an interleaved slice rather than a contiguous block. */
+   Two modes:
+   - row-first (default): row i -> column (i % columnCount). Snippets read
+     left-to-right, columns hold interleaved slices.
+   - column-first: row i -> column floor(i / perColumn). Each column is a
+     contiguous top-to-bottom slice (Issue #7). */
 function applyMultiColumnLayout(menu: MenuWithDom, state: MenuState): void {
 	const scrollEl = menu.scrollEl;
 	const rows = Array.from(
@@ -164,13 +173,17 @@ function applyMultiColumnLayout(menu: MenuWithDom, state: MenuState): void {
 	if (rows.length === 0) return;
 
 	const count = Math.max(2, state.plugin.settings.columnCount);
+	const columnFirst = state.plugin.settings.columnFirstSort;
+	const perColumn = Math.ceil(rows.length / count);
 	const container = scrollEl.createDiv({ cls: "snipdock-columns" });
 	const columns: HTMLElement[] = [];
 	for (let i = 0; i < count; i++) {
 		columns.push(container.createDiv({ cls: "snipdock-column" }));
 	}
 	rows.forEach((row, i) => {
-		const col = columns[i % count];
+		const col = columnFirst
+			? columns[Math.floor(i / perColumn)]
+			: columns[i % count];
 		if (col) col.appendChild(row);
 	});
 }
@@ -206,13 +219,21 @@ function syncMenu(state: MenuState): void {
 	const enabledCount = customCss.snippets.filter((s) =>
 		customCss.enabledSnippets.has(s)
 	).length;
+	const rememberedCount = state.plugin.settings.rememberedEnabled.length;
+	const isPaused = enabledCount === 0 && rememberedCount > 0;
+
+	const masterText = isPaused
+		? `Paused · ${rememberedCount} remembered · tap to resume`
+		: `All snippets · ${enabledCount} of ${total} on`;
 
 	state.isSyncing = true;
 	try {
 		if (state.masterTitleEl) {
-			state.masterTitleEl.setText(
-				`All snippets · ${enabledCount} of ${total} on`
-			);
+			state.masterTitleEl.setText(masterText);
+			setTooltip(state.masterTitleEl, masterText, { placement: "top" });
+		}
+		if (state.masterRowEl) {
+			state.masterRowEl.toggleClass("snipdock-paused", isPaused);
 		}
 		if (state.masterToggle) {
 			state.masterToggle.setValue(enabledCount > 0);
@@ -232,14 +253,23 @@ function addMasterRow(menu: Menu, state: MenuState): void {
 	const enabledCount = customCss.snippets.filter((s) =>
 		customCss.enabledSnippets.has(s)
 	).length;
+	const rememberedCount = plugin.settings.rememberedEnabled.length;
+	const isPaused = enabledCount === 0 && rememberedCount > 0;
+	const initialTitle = isPaused
+		? `Paused · ${rememberedCount} remembered · tap to resume`
+		: `All snippets · ${enabledCount} of ${total} on`;
 
 	menu.addItem((item) => {
-		item.setTitle(`All snippets · ${enabledCount} of ${total} on`);
+		item.setTitle(initialTitle);
 		const row = (item as unknown as { dom: HTMLElement }).dom;
 		row.addClass("snipdock-row-master");
+		row.toggleClass("snipdock-paused", isPaused);
 		disableRowScrollIntoView(row);
 		const titleEl = (item as unknown as { titleEl: HTMLElement }).titleEl;
+		state.masterRowEl = row;
 		state.masterTitleEl = titleEl;
+		// Title ellipsis-truncates in narrow menus; surface the full text on hover.
+		setTooltip(titleEl, initialTitle, { placement: "top" });
 
 		const toggle = new ToggleComponent(row);
 		toggle.setValue(enabledCount > 0).onChange((value) => {
@@ -262,6 +292,7 @@ function addMasterRow(menu: Menu, state: MenuState): void {
 					customCss.setCssEnabledStatus(s, false);
 				}
 			}
+			plugin.flushCustomCssConfig();
 			void plugin.saveSettings();
 			syncMenu(state);
 		});
@@ -285,6 +316,7 @@ function addMasterRow(menu: Menu, state: MenuState): void {
 				for (const s of customCss.snippets) {
 					customCss.setCssEnabledStatus(s, true);
 				}
+				plugin.flushCustomCssConfig();
 				syncMenu(state);
 			});
 
@@ -299,6 +331,11 @@ function addMasterRow(menu: Menu, state: MenuState): void {
 				for (const s of customCss.snippets) {
 					customCss.setCssEnabledStatus(s, false);
 				}
+				// X is an explicit "all off"; clear remembered set so the row
+				// doesn't claim to be a recoverable "paused" state.
+				plugin.settings.rememberedEnabled = [];
+				plugin.flushCustomCssConfig();
+				void plugin.saveSettings();
 				syncMenu(state);
 			});
 
@@ -343,6 +380,7 @@ function addSnippetRows(menu: Menu, state: MenuState): void {
 				.onChange((value) => {
 					if (state.isSyncing) return;
 					customCss.setCssEnabledStatus(snippet, value);
+					plugin.flushCustomCssConfig();
 					syncMenu(state);
 				});
 			stopToggleBubbling(toggle);

@@ -81,6 +81,7 @@ export class CreateSnippetModal extends Modal {
 
 		if (this.plugin.settings.enableNewByDefault) {
 			customCss.setCssEnabledStatus(name, true);
+			this.plugin.flushCustomCssConfig();
 		}
 		if (this.plugin.settings.autoOpenOnCreate) {
 			this.plugin.app.openWithDefaultApp(customCss.getSnippetPath(name));

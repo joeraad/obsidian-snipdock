@@ -1,4 +1,4 @@
-import type { App, Menu } from "obsidian";
+import type { App, Menu, Vault } from "obsidian";
 
 export interface CustomCssApi {
 	snippets: string[];
@@ -14,9 +14,17 @@ export interface SettingApi {
 	openTabById(id: string): void;
 }
 
+// `saveConfig` flushes `appearance.json` immediately, bypassing Obsidian's 1s
+// debounce on `enabledCssSnippets`. It's undocumented but stable across
+// modern Obsidian builds; we guard the call site so older clients no-op.
+export interface VaultWithSaveConfig extends Vault {
+	saveConfig?: () => Promise<void> | void;
+}
+
 export interface SnipDockApp extends App {
 	customCss: CustomCssApi;
 	setting: SettingApi;
+	vault: VaultWithSaveConfig;
 	openWithDefaultApp(path: string): void;
 }
 
