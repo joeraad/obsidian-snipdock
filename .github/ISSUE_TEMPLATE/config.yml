@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Question or discussion
+  - name: Feature request or idea
+    url: https://github.com/joeraad/obsidian-snipdock/discussions/new?category=ideas
+    about: Suggest a new feature or improvement in Discussions.
+  - name: Question or general discussion
     url: https://github.com/joeraad/obsidian-snipdock/discussions
-    about: For usage questions and open-ended ideas, please use Discussions.
+    about: For usage questions and open-ended discussion.
