@@ -6,11 +6,30 @@ import {
 	ToggleComponent,
 } from "obsidian";
 import type SnipDockPlugin from "./main";
+import type { SnippetVisibilityFilter } from "./settings";
 import { CreateSnippetModal } from "./modals/createSnippetModal";
 import { RenameSnippetModal } from "./modals/renameSnippetModal";
 import type { MenuWithDom } from "./types";
 
 const MENU_CLASS = "snipdock-menu";
+
+const SNIPPET_VISIBILITY_FILTERS: Array<{
+	value: SnippetVisibilityFilter;
+	icon: string;
+	tooltip: string;
+}> = [
+	{ value: "all", icon: "list", tooltip: "Show all snippets" },
+	{
+		value: "enabled",
+		icon: "circle-check",
+		tooltip: "Show enabled snippets only",
+	},
+	{
+		value: "disabled",
+		icon: "circle",
+		tooltip: "Show disabled snippets only",
+	},
+];
 
 interface MenuState {
 	plugin: SnipDockPlugin;
@@ -20,6 +39,9 @@ interface MenuState {
 	snippetToggles: Map<string, ToggleComponent>;
 	snippetRows: Map<string, HTMLElement>;
 	searchInputEl: HTMLInputElement | null;
+	searchQuery: string;
+	visibilityFilter: SnippetVisibilityFilter;
+	visibilityFilterButton: ButtonComponent | null;
 	isSyncing: boolean;
 }
 
@@ -60,6 +82,9 @@ export function openSnippetMenu(
 		snippetToggles: new Map(),
 		snippetRows: new Map(),
 		searchInputEl: null,
+		searchQuery: "",
+		visibilityFilter: plugin.settings.snippetVisibilityFilter,
+		visibilityFilterButton: null,
 		isSyncing: false,
 	};
 
@@ -71,7 +96,7 @@ export function openSnippetMenu(
 	menu.addSeparator();
 	addSnippetRows(menu, state);
 	menu.addSeparator();
-	addActionRow(menu, plugin);
+	addActionRow(menu, state);
 
 	const anchored = plugin.settings.anchorToStatusBar && anchorEl;
 	if (anchored) {
@@ -136,7 +161,10 @@ function addSearchRow(menu: Menu, state: MenuState): void {
 		});
 		state.searchInputEl = input;
 
-		input.addEventListener("input", () => filterSnippets(state, input.value));
+		input.addEventListener("input", () => {
+			state.searchQuery = input.value;
+			filterSnippets(state);
+		});
 		// Keep menu keyboard nav and item-selection from hijacking the field.
 		input.addEventListener("keydown", (evt) => evt.stopPropagation());
 		row.addEventListener(
@@ -151,11 +179,17 @@ function addSearchRow(menu: Menu, state: MenuState): void {
 	});
 }
 
-function filterSnippets(state: MenuState, query: string): void {
-	const q = query.trim().toLowerCase();
+function filterSnippets(state: MenuState): void {
+	const q = state.searchQuery.trim().toLowerCase();
+	const enabledSnippets = state.plugin.app.customCss.enabledSnippets;
 	for (const [name, row] of state.snippetRows) {
-		const match = q === "" || name.toLowerCase().includes(q);
-		row.toggleClass("snipdock-hidden", !match);
+		const matchesSearch = q === "" || name.toLowerCase().includes(q);
+		const isEnabled = enabledSnippets.has(name);
+		const matchesVisibility =
+			state.visibilityFilter === "all" ||
+			(state.visibilityFilter === "enabled" && isEnabled) ||
+			(state.visibilityFilter === "disabled" && !isEnabled);
+		row.toggleClass("snipdock-hidden", !matchesSearch || !matchesVisibility);
 	}
 }
 
@@ -244,6 +278,7 @@ function syncMenu(state: MenuState): void {
 	} finally {
 		state.isSyncing = false;
 	}
+	filterSnippets(state);
 }
 
 function addMasterRow(menu: Menu, state: MenuState): void {
@@ -431,7 +466,8 @@ function isControlClick(target: EventTarget | null): boolean {
 	);
 }
 
-function addActionRow(menu: Menu, plugin: SnipDockPlugin): void {
+function addActionRow(menu: Menu, state: MenuState): void {
+	const plugin = state.plugin;
 	const { customCss } = plugin.app;
 
 	menu.addItem((item) => {
@@ -439,8 +475,10 @@ function addActionRow(menu: Menu, plugin: SnipDockPlugin): void {
 		const row = (item as unknown as { dom: HTMLElement }).dom;
 		row.addClass("snipdock-row-action");
 		disableRowScrollIntoView(row);
+		const leftActions = row.createDiv({ cls: "snipdock-action-group" });
+		const rightActions = row.createDiv({ cls: "snipdock-action-group" });
 
-		const reload = new ButtonComponent(row);
+		const reload = new ButtonComponent(leftActions);
 		reload
 			.setIcon("refresh-cw")
 			.setClass("snipdock-action-btn")
@@ -451,7 +489,7 @@ function addActionRow(menu: Menu, plugin: SnipDockPlugin): void {
 				new Notice("Snippets reloaded.");
 			});
 
-		const folder = new ButtonComponent(row);
+		const folder = new ButtonComponent(leftActions);
 		folder
 			.setIcon("folder")
 			.setClass("snipdock-action-btn")
@@ -461,7 +499,7 @@ function addActionRow(menu: Menu, plugin: SnipDockPlugin): void {
 				plugin.app.openWithDefaultApp(customCss.getSnippetsFolder());
 			});
 
-		const create = new ButtonComponent(row);
+		const create = new ButtonComponent(leftActions);
 		create
 			.setIcon("plus")
 			.setClass("snipdock-action-btn")
@@ -472,7 +510,30 @@ function addActionRow(menu: Menu, plugin: SnipDockPlugin): void {
 				new CreateSnippetModal(plugin).open();
 			});
 
-		const settings = new ButtonComponent(row);
+		const visibilityFilter = new ButtonComponent(rightActions);
+		visibilityFilter
+			.setClass("snipdock-action-btn")
+			.setClass("snipdock-action-btn-filter")
+			.onClick((evt) => {
+				evt.stopPropagation();
+				const currentIndex = SNIPPET_VISIBILITY_FILTERS.findIndex(
+					(filter) => filter.value === state.visibilityFilter
+				);
+				const nextFilter =
+					SNIPPET_VISIBILITY_FILTERS[
+						(currentIndex + 1) % SNIPPET_VISIBILITY_FILTERS.length
+					];
+				if (!nextFilter) return;
+				state.visibilityFilter = nextFilter.value;
+				plugin.settings.snippetVisibilityFilter = nextFilter.value;
+				void plugin.saveSettings();
+				updateVisibilityFilterButton(state);
+				filterSnippets(state);
+			});
+		state.visibilityFilterButton = visibilityFilter;
+		updateVisibilityFilterButton(state);
+
+		const settings = new ButtonComponent(rightActions);
 		settings
 			.setIcon("settings")
 			.setClass("snipdock-action-btn")
@@ -483,6 +544,16 @@ function addActionRow(menu: Menu, plugin: SnipDockPlugin): void {
 				plugin.app.setting.openTabById(plugin.manifest.id);
 			});
 	});
+}
+
+function updateVisibilityFilterButton(state: MenuState): void {
+	const button = state.visibilityFilterButton;
+	const filter = SNIPPET_VISIBILITY_FILTERS.find(
+		(option) => option.value === state.visibilityFilter
+	);
+	if (!button || !filter) return;
+	button.setIcon(filter.icon).setTooltip(filter.tooltip);
+	button.buttonEl.setAttr("data-snipdock-filter", filter.value);
 }
 
 function stopToggleBubbling(toggle: ToggleComponent): void {
