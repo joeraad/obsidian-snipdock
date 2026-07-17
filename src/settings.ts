@@ -1,3 +1,5 @@
+export type SnippetVisibilityFilter = "all" | "enabled" | "disabled";
+
 export interface SnipDockSettings {
 	menuWidth: number;
 	menuMaxHeightVh: number;
@@ -7,6 +9,7 @@ export interface SnipDockSettings {
 	rememberedEnabled: string[];
 	anchorToStatusBar: boolean;
 	enableSearch: boolean;
+	snippetVisibilityFilter: SnippetVisibilityFilter;
 	multiColumn: boolean;
 	columnCount: number;
 	columnFirstSort: boolean;
@@ -28,6 +31,7 @@ export const DEFAULT_SETTINGS: SnipDockSettings = {
 	rememberedEnabled: [],
 	anchorToStatusBar: false,
 	enableSearch: false,
+	snippetVisibilityFilter: "all",
 	multiColumn: false,
 	columnCount: 2,
 	columnFirstSort: false,

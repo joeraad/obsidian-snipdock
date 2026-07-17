@@ -157,18 +157,25 @@
 	height: var(--icon-s);
 }
 
-/* action row: reload | folder | create */
-.snipdock-row-action {
-	justify-content: center;
+/* action row: reload/folder/create on the left; filter/settings on the right */
+.menu.snipdock-menu .snipdock-row-action {
+	justify-content: space-between;
+	gap: var(--size-4-4);
 }
 
 .snipdock-row-action .menu-item-title {
 	display: none;
 }
 
+.snipdock-action-group {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+}
+
 .snipdock-action-btn {
 	padding: var(--size-2-3) var(--size-4-3);
-	margin: var(--size-2-1) var(--size-2-1);
+	margin: var(--size-2-1) 0;
 	border-radius: var(--button-radius, var(--radius-s));
 	display: flex;
 	align-items: center;
@@ -187,6 +194,10 @@
 
 .snipdock-action-btn-primary:hover {
 	background-color: var(--interactive-accent-hover);
+}
+
+.snipdock-action-btn-filter:not([data-snipdock-filter="all"]) {
+	color: var(--interactive-accent);
 }
 
 .snipdock-action-btn svg {

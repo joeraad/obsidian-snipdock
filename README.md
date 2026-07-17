@@ -71,6 +71,7 @@ One row per `.css` file in your snippets folder.
 - Reload: re-read the snippets folder. Useful after adding files outside Obsidian.
 - Open folder: opens the snippets folder in your file manager.
 - `+`: opens the new-snippet modal. Name + body, body pre-filled from your snippet template. The file lands in `.obsidian/snippets/`; if the folder doesn't exist yet, it gets created.
+- List/check/circle icon: cycles the visible snippets through all, enabled only, and disabled only. This combines with the search box when search is enabled, and the selection is remembered between menu openings.
 - Gear: jumps to SnipDock's settings.
 
 ---
