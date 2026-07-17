@@ -97,6 +97,7 @@ export function openSnippetMenu(
 	addSnippetRows(menu, state);
 	menu.addSeparator();
 	addActionRow(menu, state);
+	filterSnippets(state);
 
 	const anchored = plugin.settings.anchorToStatusBar && anchorEl;
 	if (anchored) {
